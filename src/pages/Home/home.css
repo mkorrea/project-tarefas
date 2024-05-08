@@ -16,14 +16,14 @@
    margin-bottom: 28px;
 }
 
-.home-container form {
+form {
    max-width: 600px;
    width: 90%;
    display: flex;
    flex-direction: column;
 }
 
-.home-container form input {
+form input {
    height: 36px;
    margin-bottom: 12px;
    padding: 0 8px;
@@ -31,7 +31,7 @@
    border-radius: 4px;
 }
 
-.home-container form button {
+form button {
    height: 36px;
    border: 0;
    border-radius: 4px;
@@ -41,12 +41,12 @@
    transition: all 250ms;
 }
 
-.home-container form textarea{
+form textarea{
    height: 90px;
    margin-bottom: 0;
+   padding: 8px;
    border: 0;
    resize: none;
-   background-color: brown;
    border-radius: 4px;
 }
 
