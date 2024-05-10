@@ -8,7 +8,8 @@ export default function Admin() {
 
    function handleRegister(e){
       e.preventDefault()
-      alert("asodj")
+      alert("tarefa adicionada")
+      // add funcionamento
    }
 
    async function handleLogout(){

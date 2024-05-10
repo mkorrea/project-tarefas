@@ -12,6 +12,7 @@ export default function Register() {
 
    async function handleRegister(event) {
       event.preventDefault() // prevenir que a página seja atualizada 
+      
       if(email !== '' && password !== '') {
          await createUserWithEmailAndPassword(auth, email, password)
          .then(()=>{
