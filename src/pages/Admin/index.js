@@ -1,25 +1,113 @@
 import './admin.css'
-import { useState } from 'react'
-import { auth } from '../../firebaseConnection'
+import { useState, useEffect } from 'react'
+import { auth, db } from '../../firebaseConnection'
+import { 
+   addDoc,
+   collection,
+   onSnapshot,
+   query,
+   where,
+   orderBy,
+   doc,
+   deleteDoc,
+   updateDoc
+ } from 'firebase/firestore'
 import { signOut } from 'firebase/auth'
 
 export default function Admin() {
    const [tarefaInput, setTarefaInput] = useState('')
+   const [user, setUser] = useState({})
+   const [edit, setEdit] = useState({})
 
-   function handleRegister(e){
+   const [tarefas, setTarefas] = useState([])
+
+   useEffect(()=>{
+      async function loadTarefas() {
+         const userDetail = localStorage.getItem("@userDetail")
+         setUser(JSON.parse(userDetail))
+      
+         if(userDetail) {
+            const data = JSON.parse(userDetail)
+
+            const tarefasRef = collection(db, 'tarefas')
+            const q = query(tarefasRef, orderBy('created', 'desc'), where('userUid', '==', data?.uid))
+
+            const unsub = onSnapshot(q, (snapshot)=>{
+               let lista = []
+
+               snapshot.forEach((doc)=>{
+                  lista.push({
+                     id: doc.id,
+                     tarefa: doc.data().tarefa,
+                     userUid: doc.data().userUid
+                  })
+               })
+               setTarefas(lista)
+            })
+         }
+
+   }
+      loadTarefas()
+   }, [])
+
+   async function handleRegister(e){
       e.preventDefault()
-      alert("tarefa adicionada")
-      // add funcionamento
+      if(tarefaInput === '') {
+         alert('Digite sua tarefa...')
+         return;
+      }
+
+      if(edit?.id) {
+         handleUpdateTarefa()
+         return
+      }
+
+      await addDoc(collection(db, 'tarefas'), {
+         tarefa: tarefaInput,
+         created: new Date(),
+         userUid: user?.uid
+      })
+               // "?" para que caso a informação venha vazio, a aplicação não dê crash
+         .then(()=>{
+            console.log('Tarefa registrada')
+            setTarefaInput('')
+         })
+         .catch((error)=>{
+            console.log('erro ao registrar tarefa' + error)
+         })
+      
+      
    }
 
    async function handleLogout(){
       await signOut(auth)
-      // .then(()=>{
-      //    navigate('/')
-      // })
-      // .catch((error)=>{
-      //    console.log("erro ao sair:" + error)
-      // })
+   }
+
+
+   async function deletarTarefa(id) {
+      const docRef = doc(db, 'tarefas', id)
+      await deleteDoc(docRef)
+   }
+
+   function editTarefa(item) {
+      setTarefaInput(item.tarefa)
+      setEdit(item)
+   }
+
+   async function handleUpdateTarefa() {
+      const docRef = doc(db, 'tarefas', edit?.id)
+      await updateDoc(docRef, {
+         tarefa: tarefaInput
+      })
+      .then(()=>{
+         setTarefaInput('')
+         setEdit({})
+      })
+      .catch(()=>{
+         console.log('erro ao editar')
+         setTarefaInput('')
+         setEdit({})
+      })
    }
 
    return(
@@ -33,17 +121,19 @@ export default function Admin() {
                onChange={(e)=>setTarefaInput(e.target.value)}
             />
 
-            <button type='submit' className='btn-registrar'>Registrar tarefa</button>
+            <button type='submit' className='btn-registrar'> { Object.keys(edit).length > 0 ? 'Editar tarefa' : 'Registrar Tarefa' } </button>
          </form>
 
-         <section className='list'>
-            <p>Estudar react</p>
+         {tarefas.map((item)=> (
+            <section key={item.id} className='list'>
+            <p>{item.tarefa}</p>
 
             <div>
-               <button>Editar</button>
-               <button className='btn-concluir'>Concluir</button>
+               <button onClick={()=> editTarefa(item)}>Editar</button>
+               <button onClick={()=> deletarTarefa(item.id)} className='btn-concluir'>Concluir</button>
             </div>
          </section>
+         ))}
 
          <button className='btn-logout' onClick={handleLogout}>Sair</button>
 
